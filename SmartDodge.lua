@@ -37,12 +37,17 @@ function Dodger.OnGameStart()
 	Dodger.heroMapDirty=false
 	Dodger.projectileQueue={}
 	Dodger.defendSkillsQueue={}
+	Dodger.initSkillInfoMap()
 end
 
+function Dodger.OnScriptLoad()
+	Dodger.initSkillInfoMap()
+end
 function Dodger.init()
     local myHero = Heroes.GetLocal()
     local myName = NPC.GetUnitName(myHero)
     if Dodger.tick > GameRules.GetGameTime() then return end
+    Dodger.heroMap={}
     Dodger.tick = GameRules.GetGameTime()+1
     Dodger.skillProjectileMap = Dodger.table_invert(Dodger.projectileSkillMap)
 
@@ -76,22 +81,24 @@ end
 function Dodger.OnUnitAbility()
     for skillName,items in pairs(Dodger.skillInfoMap) do
         for heroName,hero in pairs(Dodger.heroMap) do
-            local skill = NPC.GetAbility(hero,skillName)
-            if skill and Ability.IsInAbilityPhase(skill) then
-                local haveSkill = false
-                for i = 1, #Dodger.dodgeQueue do
-                    local content = Dodger.dodgeQueue[i]
-                    local abilityName = content['abilityName']
-                    --Log.Write(abilityName..":"..skillName)
-                    if abilityName == skillName then
-                        haveSkill = true
-                    end
-                end 
+        	if NPCs.Contains(hero) then
+	            local skill = NPC.GetAbility(hero,skillName)
+	            if skill and Ability.IsInAbilityPhase(skill) then
+	                local haveSkill = false
+	                for i = 1, #Dodger.dodgeQueue do
+	                    local content = Dodger.dodgeQueue[i]
+	                    local abilityName = content['abilityName']
+	                    --Log.Write(abilityName..":"..skillName)
+	                    if abilityName == skillName then
+	                        haveSkill = true
+	                    end
+	                end 
 
-                if not haveSkill then
-                    table.insert(Dodger.dodgeQueue,{abilityName = skillName, entity=hero,time=GameRules.GetGameTime() + Ability.GetCastPoint(skill)})
-                end
-            end
+	                if not haveSkill then
+	                    table.insert(Dodger.dodgeQueue,{abilityName = skillName, entity=hero,time=GameRules.GetGameTime() + Ability.GetCastPoint(skill)})
+	                end
+	            end
+	        end
         end
     end
 end
@@ -348,233 +355,295 @@ function Dodger.table_invert(t)
    return s
 end
 
-Dodger.skillInfoMap ={}
-Dodger.skillInfoMap['zuus_thundergods_wrath'] = 
-{
-    item={
-            item_pipe={abilityType=0, time=0.3},
-            item_hood_of_defiance={abilityType=0, time=0.3},
-            item_cyclone={abilityType=1, time=0.2}, 
-            item_manta={abilityType=0,time=0.05}
-        },
-    isGlobal= true,
-    radius= nil
-}
-Dodger.skillInfoMap['magnataur_reverse_polarity'] = 
-{
-    item={
-            item_cyclone={abilityType=1, time=0.2}, 
-            item_manta={abilityType=0,time=0.05},
-            item_pipe={abilityType=0, time=0.3},
-            item_hood_of_defiance={abilityType=0, time=0.3}
-        },
-    isGlobal= false,
-    radius = {410,410,410},
-    range = {0,0,0}
-}
-Dodger.skillInfoMap['faceless_void_chronosphere'] = 
-{
-    item={  
-            item_ghost={abilityType=0, time=0.1},
-            item_manta={abilityType=0,time=0.08},
-            item_cyclone={abilityType=1, time=0.12}, 
-            item_pipe={abilityType=0, time=0.1},
-            item_hood_of_defiance={abilityType=0, time=0.1}
-        },
-    isGlobal= false,
-    radius={425,425,425},
-    range={600,600,600}
-}
-Dodger.skillInfoMap['lina_laguna_blade'] = 
-{
-    item={  
-            item_manta={abilityType=0,time=-0.2},
-            item_lotus_orb={abilityType=1, time=0.15},
-            item_blade_mail={abilityType=0, time=0.1}, 
-            item_cyclone={abilityType=1, time=0}, 
-            item_pipe={abilityType=0, time=0},
-            item_hood_of_defiance={abilityType=0, time=0}
-        },
-    isGlobal= false,
-    radius={50,50,50},
-    range={600,600,600},
-    afterEffect = true,
-    wasTargetMe = false
-}
+function Dodger.initSkillInfoMap()
+	Dodger.skillInfoMap ={}
+	Dodger.skillInfoMap['zuus_thundergods_wrath'] = 
+	{
+	    item={
+	            item_pipe={abilityType=0, time=0.3},
+	            item_hood_of_defiance={abilityType=0, time=0.3},
+	            item_cyclone={abilityType=1, time=0.2}, 
+	            item_manta={abilityType=0,time=0.05}
+	        },
+	    isGlobal= true,
+	    radius= nil
+	}
+	Dodger.skillInfoMap['magnataur_reverse_polarity'] = 
+	{
+	    item={
+	            item_cyclone={abilityType=1, time=0.2}, 
+	            item_manta={abilityType=0,time=0.05},
+	            item_pipe={abilityType=0, time=0.3},
+	            item_hood_of_defiance={abilityType=0, time=0.3}
+	        },
+	    isGlobal= false,
+	    radius = {410,410,410},
+	    range = {0,0,0}
+	}
+	Dodger.skillInfoMap['faceless_void_chronosphere'] = 
+	{
+	    item={  
+	            item_ghost={abilityType=0, time=0.1},
+	            item_manta={abilityType=0,time=0.08},
+	            item_cyclone={abilityType=1, time=0.12}, 
+	            item_pipe={abilityType=0, time=0.1},
+	            item_hood_of_defiance={abilityType=0, time=0.1}
+	        },
+	    isGlobal= false,
+	    radius={425,425,425},
+	    range={600,600,600}
+	}
+	Dodger.skillInfoMap['lina_laguna_blade'] = 
+	{
+	    item={  
+	            item_manta={abilityType=0,time=-0.2},
+	            item_lotus_orb={abilityType=1, time=0.15},
+	            item_blade_mail={abilityType=0, time=0.1}, 
+	            item_cyclone={abilityType=1, time=0}, 
+	            item_pipe={abilityType=0, time=0},
+	            item_hood_of_defiance={abilityType=0, time=0}
+	        },
+	    isGlobal= false,
+	    radius={50,50,50},
+	    range={600,600,600},
+	    afterEffect = true,
+	    wasTargetMe = false
+	}
 
-Dodger.skillInfoMap['lion_finger_of_death'] = 
-{
-    item={  
-            item_manta={abilityType=0,time=-0.2},
-            item_lotus_orb={abilityType=1, time=0.15},
-            item_blade_mail={abilityType=0, time=0.1}, 
-            item_cyclone={abilityType=1, time=0}, 
-            item_pipe={abilityType=0, time=0},
-            item_hood_of_defiance={abilityType=0, time=0}
-        },
-    isGlobal= false,
-    radius={50,50,50},
-    range={900,900,900},
-    afterEffect = true,
-    wasTargetMe = false
-}
-Dodger.skillInfoMap['terrorblade_sunder'] = 
-{
-    item={  
-            item_lotus_orb={abilityType=1, time=0.15},
-        },
-    isGlobal= false,
-    radius={50,50,50},
-    range={475,475,475}
-}
+	Dodger.skillInfoMap['lion_finger_of_death'] = 
+	{
+	    item={  
+	            item_manta={abilityType=0,time=-0.2},
+	            item_lotus_orb={abilityType=1, time=0.15},
+	            item_blade_mail={abilityType=0, time=0.1}, 
+	            item_cyclone={abilityType=1, time=0}, 
+	            item_pipe={abilityType=0, time=0},
+	            item_hood_of_defiance={abilityType=0, time=0}
+	        },
+	    isGlobal= false,
+	    radius={50,50,50},
+	    range={900,900,900},
+	    afterEffect = true,
+	    wasTargetMe = false
+	}
+	Dodger.skillInfoMap['terrorblade_sunder'] = 
+	{
+	    item={  
+	            item_lotus_orb={abilityType=1, time=0.15},
+	        },
+	    isGlobal= false,
+	    radius={50,50,50},
+	    range={475,475,475}
+	}
 
+	Dodger.skillInfoMap['slardar_slithereen_crush'] = 
+	{
+	    item={  
+	            item_manta={abilityType=0,time=0.1},
+	            item_cyclone={abilityType=1, time=0.2}
+	        },
+	    isGlobal= false,
+	    radius={350,350,350,350},
+	    range={0,0,0,0}
+	}
 
-Dodger.skillInfoMap['huskar_life_break'] = 
-{
-    item={  
-    		item_cyclone={abilityType=1, time=0}, 
-    		item_pipe={abilityType=0, time=0},
-            item_hood_of_defiance={abilityType=0, time=0},
-    		item_blade_mail={abilityType=0, time=0}
-            -- item_lotus_orb={abilityType=1, time=0}
-        },
-    isGlobal= false,
-     afterEffect = true,
-    radius={10,10,10},
-    range={550,550,550}
-}
+	Dodger.skillInfoMap['axe_berserkers_call'] = 
+	{
+	    item={  
+	            item_manta={abilityType=0,time=0.13},
+	            item_cyclone={abilityType=1, time=0.2}
+	        },
+	    isGlobal= false,
+	    radius={300,300,300,300},
+	    range={0,0,0,0}
+	}
+	Dodger.skillInfoMap['huskar_life_break'] = 
+	{
+	    item={  
+	    		item_cyclone={abilityType=1, time=0}, 
+	    		item_pipe={abilityType=0, time=0},
+	            item_hood_of_defiance={abilityType=0, time=0},
+	    		item_blade_mail={abilityType=0, time=0}
+	            -- item_lotus_orb={abilityType=1, time=0}
+	        },
+	    isGlobal= false,
+	     afterEffect = true,
+	    radius={10,10,10},
+	    range={550,550,550}
+	}
 
-Dodger.skillInfoMap['pangolier_gyroshell'] = 
-{
-    item={  
-    		item_force_staff={abilityType=1, time=0.18}, 
-        },
-    isGlobal= true,
-    castOnEnemy = true,
-    defendRange = 750,
-    radius={50,50,50},
-    range={550,550,550}
-}
+	Dodger.skillInfoMap['pangolier_gyroshell'] = 
+	{
+	    item={  
+	    		item_force_staff={abilityType=1, time=0.18}, 
+	        },
+	    isGlobal= true,
+	    castOnEnemy = true,
+	    defendRange = 750,
+	    radius={50,50,50},
+	    range={550,550,550}
+	}
 
-Dodger.skillInfoMap['doom_bringer_doom'] = 
-{
-    item={  
-            item_lotus_orb={abilityType=1, time=0.15},
-            item_blade_mail={abilityType=0, time=0.1}, 
-            item_manta={abilityType=0,time=0.1},
-            item_pipe={abilityType=0, time=0},
-            item_hood_of_defiance={abilityType=0, time=0}
-        },
-    isGlobal= false,
-    radius={50,50,50},
-    range={550,550,550}
-}
+	Dodger.skillInfoMap['doom_bringer_doom'] = 
+	{
+	    item={  
+	            item_lotus_orb={abilityType=1, time=0.15},
+	            item_blade_mail={abilityType=0, time=0.1}, 
+	            item_manta={abilityType=0,time=0.1},
+	            item_pipe={abilityType=0, time=0},
+	            item_hood_of_defiance={abilityType=0, time=0}
+	        },
+	    isGlobal= false,
+	    radius={50,50,50},
+	    range={550,550,550}
+	}
 
-Dodger.skillInfoMap['juggernaut_omni_slash'] = 
-{
-    item={  
-            item_lotus_orb={abilityType=1, time=0.15},
-            item_manta={abilityType=0,time=0.1},
-            item_ghost={abilityType=0, time=0.1},
-            item_manta={abilityType=0,time=0.08},
-            item_cyclone={abilityType=1, time=-0.1}, 
-        },
-    afterEffect = true,
-    isGlobal= false,
-    radius={50,50,50},
-    range={550,550,550}
-}
-Dodger.skillInfoMap['sven_storm_bolt'] = 
-{
-    item={  
-            item_lotus_orb={abilityType=1, time=0},
-            item_pipe={abilityType=0, time=0},
-            item_hood_of_defiance={abilityType=0, time=0},
-            item_cyclone={abilityType=1, time=0}, 
-        },
-    projectileItem ={
-    	item_manta={abilityType=0,time=0.08,range=200},
-    },
-    afterEffect = true,
-    isGlobal= false,
-    radius={50,50,50,50},
-    range={600,600,600,600}
-}
+	Dodger.skillInfoMap['juggernaut_omni_slash'] = 
+	{
+	    item={  
+	            item_lotus_orb={abilityType=1, time=0.15},
+	            item_manta={abilityType=0,time=0.1},
+	            item_ghost={abilityType=0, time=0.1},
+	            item_manta={abilityType=0,time=0.08},
+	            item_cyclone={abilityType=1, time=-0.1}, 
+	        },
+	    afterEffect = true,
+	    isGlobal= false,
+	    radius={50,50,50},
+	    range={550,550,550}
+	}
+	Dodger.skillInfoMap['sven_storm_bolt'] = 
+	{
+	    item={  
+	            item_lotus_orb={abilityType=1, time=0},
+	            item_pipe={abilityType=0, time=0},
+	            item_hood_of_defiance={abilityType=0, time=0},
+	            item_cyclone={abilityType=1, time=0}, 
+	        },
+	    projectileItem ={
+	    	item_manta={abilityType=0,time=0.08,range=200},
+	    },
+	    afterEffect = true,
+	    isGlobal= false,
+	    radius={50,50,50,50},
+	    range={600,600,600,600}
+	}
 
-Dodger.skillInfoMap['vengefulspirit_magic_missile'] = 
-{
-    item={  
-            item_lotus_orb={abilityType=1, time=0},
-            item_pipe={abilityType=0, time=0},
-            item_hood_of_defiance={abilityType=0, time=0},
-            item_cyclone={abilityType=1, time=0}, 
-        },
-    projectileItem ={
-    	item_manta={abilityType=0,time=0.08,range=300},
-    },
-    afterEffect = true,
-    isGlobal= false,
-    radius={50,50,50,50},
-    range={500,500,600,500}
-}
+	Dodger.skillInfoMap['vengefulspirit_magic_missile'] = 
+	{
+	    item={  
+	            item_lotus_orb={abilityType=1, time=0},
+	            item_pipe={abilityType=0, time=0},
+	            item_hood_of_defiance={abilityType=0, time=0},
+	            item_cyclone={abilityType=1, time=0}, 
+	        },
+	    projectileItem ={
+	    	item_manta={abilityType=0,time=0.08,range=300},
+	    },
+	    afterEffect = true,
+	    isGlobal= false,
+	    radius={50,50,50,50},
+	    range={500,500,600,500}
+	}
 
-Dodger.skillInfoMap['chaos_knight_chaos_bolt'] = 
-{
-    item={  
-            item_lotus_orb={abilityType=1, time=0},
-            item_pipe={abilityType=0, time=0},
-            item_hood_of_defiance={abilityType=0, time=0},
-            item_cyclone={abilityType=1, time=0}, 
-        },
-    projectileItem ={
-    	item_manta={abilityType=0,time=0.08,range=300},
-    },
-    afterEffect = true,
-    isGlobal= false,
-    radius={50,50,50,50},
-    range={500,500,600,500}
-}
+	Dodger.skillInfoMap['chaos_knight_chaos_bolt'] = 
+	{
+	    item={  
+	            item_lotus_orb={abilityType=1, time=0},
+	            item_pipe={abilityType=0, time=0},
+	            item_hood_of_defiance={abilityType=0, time=0},
+	            item_cyclone={abilityType=1, time=0}, 
+	        },
+	    projectileItem ={
+	    	item_manta={abilityType=0,time=0.08,range=300},
+	    },
+	    afterEffect = true,
+	    isGlobal= false,
+	    radius={50,50,50,50},
+	    range={500,500,600,500}
+	}
 
-Dodger.skillInfoMap['skeleton_king_hellfire_blast'] = 
-{
-    item={  
-            item_lotus_orb={abilityType=1, time=0},
-            item_pipe={abilityType=0, time=0},
-            item_hood_of_defiance={abilityType=0, time=0},
-            item_cyclone={abilityType=1, time=0}, 
-        },
-    projectileItem ={
-    	item_manta={abilityType=0,time=0.08,range=300},
-    },
-    afterEffect = true,
-    isGlobal= false,
-    radius={50,50,50,50},
-    range={500,500,600,500}
-}
+	Dodger.skillInfoMap['skeleton_king_hellfire_blast'] = 
+	{
+	    item={  
+	            item_lotus_orb={abilityType=1, time=0},
+	            item_pipe={abilityType=0, time=0},
+	            item_hood_of_defiance={abilityType=0, time=0},
+	            item_cyclone={abilityType=1, time=0}, 
+	        },
+	    projectileItem ={
+	    	item_manta={abilityType=0,time=0.08,range=300},
+	    },
+	    afterEffect = true,
+	    isGlobal= false,
+	    radius={50,50,50,50},
+	    range={500,500,600,500}
+	}
 
-Dodger.skillInfoMap['viper_viper_strike'] = 
-{
-    item={  
-            item_lotus_orb={abilityType=1, time=0},
-            item_pipe={abilityType=0, time=0},
-            item_hood_of_defiance={abilityType=0, time=0},
-            item_cyclone={abilityType=1, time=0}, 
-        },
-    projectileItem ={
-    	item_manta={abilityType=0,time=0.08,range=400},
-    },
-    afterEffect = true,
-    isGlobal= false,
-    radius={50,50,50,50},
-    range={500,500,600,500}
-}
+	Dodger.skillInfoMap['viper_viper_strike'] = 
+	{
+	    item={  
+	            item_lotus_orb={abilityType=1, time=0},
+	            item_pipe={abilityType=0, time=0},
+	            item_hood_of_defiance={abilityType=0, time=0},
+	            item_cyclone={abilityType=1, time=0}, 
+	        },
+	    projectileItem ={
+	    	item_manta={abilityType=0,time=0.08,range=400},
+	    },
+	    afterEffect = true,
+	    isGlobal= false,
+	    radius={50,50,50,50},
+	    range={400,400,400,400}
+	}
+	Dodger.skillInfoMap['winter_wyvern_winters_curse'] = 
+	{
+	    item={  
+	            item_lotus_orb={abilityType=1, time=0.15},
+	            item_ghost={abilityType=0, time=0.1}
+	        },
+	    isGlobal= false,
+	    radius={500,500,500},
+	    range={800,800,800}
+	}
+
+	Dodger.skillInfoMap['dragon_knight_dragon_tail'] = 
+	{
+	    item={  
+	            item_lotus_orb={abilityType=1, time=0},
+	            item_pipe={abilityType=0, time=0},
+	            item_hood_of_defiance={abilityType=0, time=0},
+	            item_cyclone={abilityType=1, time=0}, 
+	        },
+	    projectileItem ={
+	    	item_manta={abilityType=0,time=0.08,range=400},
+	    },
+	    afterEffect = true,
+	    isGlobal= false,
+	    radius={50,50,50,50},
+	    range={400,400,400,400}
+	}
+
+	Dodger.skillInfoMap['centaur_hoof_stomp'] = 
+	{
+	    item={  
+	            item_manta={abilityType=0,time=0.1},
+	            item_cyclone={abilityType=1, time=0.2}
+	        },
+	    isGlobal= false,
+	    radius={315,315,315,315},
+	    range={0,0,0,0}
+	}
+	
+end
 
 Dodger.projectileSkillMap ={
 	sven_spell_storm_bolt="sven_storm_bolt",
 	vengeful_magic_missle="vengefulspirit_magic_missile",
 	chaos_knight_chaos_bolt = "chaos_knight_chaos_bolt",
 	skeletonking_hellfireblast = "skeleton_king_hellfire_blast",
-	UNKNOWN_RESOURCE="viper_viper_strike"
+	UNKNOWN_RESOURCE="viper_viper_strike",
+	dragon_knight_dragon_tail_dragonform_proj="dragon_knight_dragon_tail"
 }
 Dodger.skillProjectileMap ={}
 
