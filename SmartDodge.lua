@@ -27,7 +27,7 @@ function Dodger.OnUpdate()
     Dodger.castAnimDodger()
     Dodger.castProjectileDodger()
     Dodger.OnUnitAbility()
-    
+    --Log.Write(Entity.GetAbsOrigin(myHero):__tostring())
 end
 
 function Dodger.OnGameStart()
@@ -312,7 +312,7 @@ end
 
 function Dodger.OnProjectile(projectile)
 	--Log.Write(projectile.name)
-	if Dodger.projectileSkillMap[projectile.name] and Entity.IsSameTeam(Heroes.GetLocal(),projectile.target) then
+	if Dodger.projectileSkillMap[projectile.name] and projectile.target and Entity.IsSameTeam(Heroes.GetLocal(),projectile.target) then
 		table.insert(Dodger.projectileQueue, {
 			projectile=projectile,
 			source = projectile.source,
@@ -363,7 +363,8 @@ function Dodger.initSkillInfoMap()
 	            item_pipe={abilityType=0, time=0.3},
 	            item_hood_of_defiance={abilityType=0, time=0.3},
 	            item_cyclone={abilityType=1, time=0.2}, 
-	            item_manta={abilityType=0,time=0.05}
+	            item_manta={abilityType=0,time=0.05},
+	            item_blade_mail={abilityType=0, time=0.1},
 	        },
 	    isGlobal= true,
 	    radius= nil
@@ -634,6 +635,19 @@ function Dodger.initSkillInfoMap()
 	    radius={315,315,315,315},
 	    range={0,0,0,0}
 	}
+
+	Dodger.skillInfoMap['legion_commander_duel'] = 
+	{
+	    item={  
+	            item_manta={abilityType=0,time=0.1},
+	            item_blade_mail={abilityType=0, time=0.1},
+	            item_ghost={abilityType=0, time=0.1}
+	        },
+	    isGlobal= false,
+	    radius={50,50,50,50},
+	    range={150,150,150}
+	}
+	
 	
 end
 
